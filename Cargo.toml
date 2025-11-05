@@ -1,0 +1,14 @@
+[package]
+name = "order_book_parser"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "A parser for order book data in financial markets, parsing bids and asks from a string format."
+authors = ["Mykhailo Pilat <m.pilat@ukma.edu.ua>"]
+
+[dependencies]
+anyhow = "1.0.100"
+pest = "2.8.3"
+pest_derive = "2.8.3"
+rust_decimal = "1.39.0"
+thiserror = "2.0.17"

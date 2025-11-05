@@ -1,0 +1,18 @@
+WHITESPACE = { " " | "\t" | "\r" | "\n" }
+
+ASCII_DIGIT = {'0'..'9'}
+
+bids_identifier = { "BIDS" }
+asks_identifier = { "ASKS" }
+
+integer = @{ ASCII_DIGIT+ }
+number = @{ integer ~ ("." ~ integer)? }
+
+level = { number ~ "," ~ number }
+level_list = { (level)? ~ ("|" ~ level)* }
+
+bids_side = { bids_identifier ~ ":" ~ level_list }
+asks_side = { asks_identifier ~ ":" ~ level_list }
+
+order_book = { bids_side ~ ";" ~ asks_side }
+
