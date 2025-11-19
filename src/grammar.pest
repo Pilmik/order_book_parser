@@ -1,4 +1,4 @@
-WHITESPACE = { " " | "\t" | "\r" | "\n" }
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
 
 ASCII_DIGIT = {'0'..'9'}
 
