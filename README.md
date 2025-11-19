@@ -41,6 +41,33 @@ The parsing process transforms a raw string into a structured financial object t
 
 ---
 
+## Grammar description
+The parsing logic is defined in grammar.pest using PEG rules. The parser processes the input format: "BIDS:price,qty|price,qty;ASKS:price,qty|price,qty"
+```pest
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+ASCII_DIGIT = {'0'..'9'}
+
+bids_identifier = { "BIDS" }
+asks_identifier = { "ASKS" }
+
+integer = @{ ASCII_DIGIT+ }
+number = @{ integer ~ ("." ~ integer)? }
+
+// A single price level: "100.5,10"
+level = { number ~ "," ~ number }
+
+// A list of levels separated by "|": "100.5,10|100.0,5"
+level_list = { (level)? ~ ("|" ~ level)* }
+
+bids_side = { bids_identifier ~ ":" ~ level_list }
+asks_side = { asks_identifier ~ ":" ~ level_list }
+
+// Root rule
+order_book = { bids_side ~ ";" ~ asks_side }
+```
+
+
 ## CLI Usage
 The project includes a CLI built with clap. To ensure data integrity, instrument configuration arguments are mandatory for parsing.
 

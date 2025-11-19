@@ -4,6 +4,82 @@ use pest::Parser;
 use rust_decimal::prelude::*;
 
 #[test]
+fn test_grammar_rule_whitespace() {
+    let input = "BIDS : 100.0 , 5 ; ASKS : 102.0 , 5";
+    assert!(parse_order_book(input, None).is_ok());
+}
+
+#[test]
+fn test_grammar_rule_ascii_digit() {
+    assert!(OrderBookParser::parse(Rule::ASCII_DIGIT, "0").is_ok());
+    assert!(OrderBookParser::parse(Rule::ASCII_DIGIT, "9").is_ok());
+
+    let mut _pairs = OrderBookParser::parse(Rule::ASCII_DIGIT, "12");
+    assert!(OrderBookParser::parse(Rule::ASCII_DIGIT, "a").is_err());
+}
+
+#[test]
+fn test_grammar_rule_identifiers() {
+    assert!(OrderBookParser::parse(Rule::bids_identifier, "BIDS").is_ok());
+    assert!(OrderBookParser::parse(Rule::asks_identifier, "ASKS").is_ok());
+
+    assert!(OrderBookParser::parse(Rule::bids_identifier, "bids").is_err());
+    assert!(OrderBookParser::parse(Rule::bids_identifier, "asks").is_err());
+}
+
+#[test]
+fn test_grammar_rule_integer() {
+    assert!(OrderBookParser::parse(Rule::integer, "12345").is_ok());
+    assert!(OrderBookParser::parse(Rule::integer, "0").is_ok());
+
+    assert!(OrderBookParser::parse(Rule::integer, "a12").is_err());
+}
+
+#[test]
+fn test_grammar_rule_number() {
+    let valid_int = "123";
+    let valid_dec = "123.456";
+
+    assert!(OrderBookParser::parse(Rule::number, valid_int).is_ok());
+    assert!(OrderBookParser::parse(Rule::number, valid_dec).is_ok());
+    assert!(OrderBookParser::parse(Rule::number, "abc").is_err());
+}
+
+#[test]
+fn test_grammar_rule_level() {
+    assert!(OrderBookParser::parse(Rule::level, "100.5,10").is_ok());
+    assert!(OrderBookParser::parse(Rule::level, "50,5").is_ok());
+
+    assert!(OrderBookParser::parse(Rule::level, "100.5").is_err());
+    assert!(OrderBookParser::parse(Rule::level, "100.5,").is_err());
+    assert!(OrderBookParser::parse(Rule::level, ",10").is_err());
+}
+
+#[test]
+fn test_grammar_rule_level_list() {
+    assert!(OrderBookParser::parse(Rule::level_list, "100.0,10").is_ok());
+    assert!(OrderBookParser::parse(Rule::level_list, "100.0,10|99.5,20").is_ok());
+    assert!(OrderBookParser::parse(Rule::level_list, "").is_ok());
+}
+
+#[test]
+fn test_grammar_rule_bids_side() {
+    assert!(OrderBookParser::parse(Rule::bids_side, "BIDS:100.0,10|99.0,5").is_ok());
+    assert!(OrderBookParser::parse(Rule::bids_side, "BIDS:").is_ok());
+
+    assert!(OrderBookParser::parse(Rule::bids_side, "BIDS 100,1").is_err());
+    assert!(OrderBookParser::parse(Rule::bids_side, "ASKS:100,1").is_err());
+}
+
+#[test]
+fn test_grammar_rule_asks_side() {
+    assert!(OrderBookParser::parse(Rule::asks_side, "ASKS:100.0,10").is_ok());
+
+    assert!(OrderBookParser::parse(Rule::asks_side, "ASKS-100,1").is_err());
+    assert!(OrderBookParser::parse(Rule::asks_side, "BIDS:100,1").is_err());
+}
+
+#[test]
 fn test_valid_order_book() -> Result<()> {
     let input = "BIDS:100.0,10|99.5,5;ASKS:102.0,20|103.5,15";
     let book = parse_order_book(input, None)?;
@@ -15,6 +91,18 @@ fn test_valid_order_book() -> Result<()> {
     assert_eq!(book.bids[0].quantity.to_string(), "10");
 
     Ok(())
+}
+
+#[test]
+fn test_invalid_syntax_order_book() {
+    let missing_semicolon = "BIDS:100.0,10 ASKS:101.0,10";
+    assert!(parse_order_book(missing_semicolon, None).is_err());
+
+    let wrong_header = "BIDS:100.0,10;ASKA:101.0,10";
+    assert!(parse_order_book(wrong_header, None).is_err());
+
+    let garbage = "BlaBlaWlaWla";
+    assert!(parse_order_book(garbage, None).is_err());
 }
 
 #[test]
@@ -55,29 +143,6 @@ fn test_duplicate_price() {
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(format!("{}", err).contains("Duplicate price level"));
-}
-
-#[test]
-fn test_grammar_rule_number() {
-    let valid_int = "123";
-    let valid_dec = "123.456";
-
-    assert!(OrderBookParser::parse(Rule::number, valid_int).is_ok());
-    assert!(OrderBookParser::parse(Rule::number, valid_dec).is_ok());
-    assert!(OrderBookParser::parse(Rule::number, "abc").is_err());
-}
-
-#[test]
-fn test_grammar_rule_whitespace() {
-    let input = "BIDS : 100.0 , 5 ; ASKS : 102.0 , 5";
-    assert!(parse_order_book(input, None).is_ok());
-}
-
-#[test]
-fn test_grammar_rule_identifiers() {
-    assert!(OrderBookParser::parse(Rule::bids_identifier, "BIDS").is_ok());
-    assert!(OrderBookParser::parse(Rule::asks_identifier, "ASKS").is_ok());
-    assert!(OrderBookParser::parse(Rule::bids_identifier, "bids").is_err());
 }
 
 #[test]
